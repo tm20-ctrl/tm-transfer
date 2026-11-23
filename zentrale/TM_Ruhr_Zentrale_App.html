@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TM Ruhr – Unternehmer & Zentrale</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FBF7EE;--surface:#fff;--surface2:#F4EEDF;--ink:#2A2118;--muted:#6F6355;--accent:#E8890C;--line:#E6DDC8;--good:#2E7D4F;--warn:#9A5200;--bad:#B3261E}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Nunito,system-ui,sans-serif}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800}.logo{background:var(--accent);border-radius:12px;padding:7px 10px}.pill{border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+.banner{text-align:center;background:var(--surface2);color:var(--muted);padding:8px 12px;font-size:12px}
+main{max-width:720px;margin:20px auto;padding:0 14px 40px}.muted{color:var(--muted)}.small{font-size:13px}.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:13px}
+h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:0 0 9px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:var(--surface2);padding:13px;border-radius:16px}.stat b{display:block;font-size:23px}.label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:800;margin:10px 0 5px}
+button{font:inherit;cursor:pointer}.btn{border:0;border-radius:99px;padding:11px 15px;background:var(--accent);color:#2A1A05;font-weight:800}.btn.secondary{background:var(--surface2);border:1px solid var(--line);color:var(--ink)}.btn.danger{background:#f7e5e1;color:#8b241e}.btn.full{width:100%;margin-top:8px}
+nav{display:flex;gap:7px;overflow:auto;margin-bottom:14px}nav button{border:1px solid var(--line);border-radius:99px;background:var(--surface);padding:9px 13px;font-weight:800;white-space:nowrap}nav button.active{background:var(--accent);border-color:var(--accent)}
+input,select{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:var(--surface2);color:var(--ink);margin:4px 0 9px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:10px 7px;border-bottom:1px solid var(--line)}th{font-size:11px;color:var(--muted);text-transform:uppercase}
+.status{font-size:12px;font-weight:800;padding:4px 9px;border-radius:99px;background:var(--surface2);white-space:nowrap}.status.good{color:var(--good);background:#e8f3eb}.status.wait{color:var(--warn);background:#fff1d9}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.actions .btn{padding:8px 11px;font-size:13px}
+.empty{padding:18px;text-align:center;color:var(--muted);background:var(--surface2);border-radius:15px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 16px;border-radius:99px;display:none;max-width:90%;text-align:center}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.card{padding:19px}}
+</style></head>
+<body>
+<header><div class="brand"><span class="logo">TM</span> TM Ruhr <span class="pill">Zentrale · Demo</span></div><span class="pill">🏢 Unternehmen</span></header>
+<div class="banner">Demo mit Beispieldaten. Änderungen werden nur in dieser Browser-Demo simuliert und nicht dauerhaft gespeichert.</div>
+<main>
+<nav><button class="active" data-tab="dashboard">Übersicht</button><button data-tab="orders">Aufträge</button><button data-tab="drivers">Fahrer</button><button data-tab="vehicles">Fahrzeuge</button><button data-tab="billing">Abrechnung</button><button data-tab="company">Unternehmen</button></nav>
+<section id="view"></section>
+</main><div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+const state={tab:"dashboard",orders:[
+{id:"TM-2401",customer:"Anna M.",from:"Essen Hbf",to:"Bochum Hbf",driver:"Murat K.",status:"Unterwegs",price:40.40},
+{id:"TM-2402",customer:"Helga S.",from:"Rüttenscheid",to:"Flughafen Düsseldorf",driver:"Noch offen",status:"Fahrer gesucht",price:79.90},
+{id:"TM-2403",customer:"Tim R.",from:"Dortmund Hbf",to:"Westfalenpark",driver:"Leyla A.",status:"Abgeschlossen",price:21.40}],
+drivers:[{name:"Murat K.",vehicle:"Mercedes E-Klasse",status:"Online"},{name:"Leyla A.",vehicle:"VW Passat",status:"Unterwegs"},{name:"Jonas B.",vehicle:"Skoda Superb",status:"Offline"}],
+vehicles:[{plate:"E-NX 1204",model:"Mercedes E-Klasse",driver:"Murat K.",status:"Aktiv"},{plate:"BO-TR 882",model:"VW Passat",driver:"Leyla A.",status:"Aktiv"},{plate:"DO-JB 415",model:"Skoda Superb",driver:"Jonas B.",status:"Aktiv"}],
+company:{name:"Taxi Beispiel Essen",city:"Essen",phone:"0201 123456",email:"dispo@beispiel.de"}};
+function money(n){return n.toLocaleString("de-DE",{style:"currency",currency:"EUR"})}
+function toast(t){let x=$("#toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",2200)}
+function dashboard(){let running=state.orders.filter(x=>x.status==="Unterwegs").length,open=state.orders.filter(x=>x.status==="Fahrer gesucht").length,done=state.orders.filter(x=>x.status==="Abgeschlossen").length,total=state.orders.reduce((a,x)=>a+x.price,0);
+return `<div class="grid"><div class="stat"><span class="small muted">Aufträge heute</span><b>${state.orders.length}</b></div><div class="stat"><span class="small muted">Unterwegs</span><b>${running}</b></div><div class="stat"><span class="small muted">Fahrer gesucht</span><b>${open}</b></div><div class="stat"><span class="small muted">Abgeschlossen</span><b>${done}</b></div></div>
+<div class="card" style="margin-top:13px"><div class="row"><h2>Aktuelle Aufträge</h2><button class="btn secondary" onclick="setTab('orders')">Alle anzeigen</button></div>${state.orders.slice(0,3).map(orderRow).join("")}</div>
+<div class="card"><h2>Flottenstatus</h2><div class="row"><span>Fahrer online</span><b>${state.drivers.filter(x=>x.status!=="Offline").length} / ${state.drivers.length}</b></div><div class="row"><span>Fahrzeuge aktiv</span><b>${state.vehicles.filter(x=>x.status==="Aktiv").length} / ${state.vehicles.length}</b></div><p class="small muted">Umsatz der angezeigten Demo-Aufträge: ${money(total)}</p></div>`}
+function orderRow(o){return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="row"><b>${o.id} · ${o.customer}</b><span class="status ${o.status==="Abgeschlossen"?"good":o.status==="Fahrer gesucht"?"wait":""}">${o.status}</span></div><div class="small muted">${o.from} → ${o.to}</div><div class="row small"><span>Fahrer: ${o.driver}</span><b>${money(o.price)}</b></div></div>`}
+function orders(){return `<div class="card"><div class="row"><h2>Auftragsverwaltung</h2><button class="btn" onclick="newOrder()">+ Auftrag</button></div><p class="small muted">Demo-Aufträge verwalten und Fahrer zuweisen.</p>${state.orders.map(o=>`${orderRow(o)}<div class="actions" style="padding:7px 0"><button class="btn secondary" onclick="assignDriver('${o.id}')">Fahrer zuweisen</button><button class="btn secondary" onclick="changeStatus('${o.id}')">Status ändern</button></div>`).join("")}</div>`}
+function drivers(){return `<div class="card"><div class="row"><h2>Fahrerverwaltung</h2><button class="btn" onclick="addDriver()">+ Fahrer</button></div><table><thead><tr><th>Fahrer</th><th>Fahrzeug</th><th>Status</th></tr></thead><tbody>${state.drivers.map((d,i)=>`<tr><td><b>${d.name}</b></td><td>${d.vehicle}</td><td><span class="status ${d.status==="Online"?"good":""}">${d.status}</span></td></tr>`).join("")}</tbody></table><p class="small muted">In der echten Plattform benötigen Fahrer sichere Konten und geprüfte Unterlagen.</p></div>`}
+function vehicles(){return `<div class="card"><div class="row"><h2>Fahrzeugverwaltung</h2><button class="btn" onclick="addVehicle()">+ Fahrzeug</button></div><table><thead><tr><th>Kennzeichen</th><th>Modell</th><th>Fahrer</th><th>Status</th></tr></thead><tbody>${state.vehicles.map(v=>`<tr><td><b>${v.plate}</b></td><td>${v.model}</td><td>${v.driver}</td><td><span class="status good">${v.status}</span></td></tr>`).join("")}</tbody></table></div>`}
+function billing(){let gross=state.orders.reduce((a,x)=>a+x.price,0);return `<div class="card"><h2>Abrechnung & Umsatz</h2><div class="grid"><div class="stat"><span class="small muted">Demo-Umsatz</span><b>${money(gross)}</b></div><div class="stat"><span class="small muted">Aufträge</span><b>${state.orders.length}</b></div></div><p class="small muted">Die Beträge sind Beispieldaten. Provisionsmodell, Steuern, Rechnungen und Auszahlungen müssen später fachlich und rechtlich festgelegt werden.</p><button class="btn secondary full" onclick="toast('Export wird später angebunden.')">Abrechnung exportieren</button></div>`}
+function company(){return `<div class="card"><h2>Unternehmensprofil</h2><label class="label">Firmenname</label><input id="cname" value="${state.company.name}"><label class="label">Standort</label><input id="ccity" value="${state.company.city}"><label class="label">Telefon</label><input id="cphone" value="${state.company.phone}"><label class="label">E-Mail</label><input id="cemail" value="${state.company.email}"><button class="btn full" onclick="saveCompany()">Änderungen übernehmen</button></div>`}
+function render(){$("#view").innerHTML=({dashboard,orders,drivers,vehicles,billing,company})[state.tab]();document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.tab))}
+function setTab(t){state.tab=t;render()}
+function newOrder(){let customer=prompt("Name des Fahrgasts:");if(!customer)return;let from=prompt("Abholort:");if(!from)return;let to=prompt("Zielort:");if(!to)return;state.orders.unshift({id:"TM-"+(2404+state.orders.length),customer,from,to,driver:"Noch offen",status:"Fahrer gesucht",price:0});render();toast("Demo-Auftrag angelegt")}
+function assignDriver(id){let names=state.drivers.map(d=>d.name);let pick=prompt("Fahrer auswählen:\n"+names.map((n,i)=>(i+1)+". "+n).join("\n"));let d=state.drivers[Number(pick)-1];if(!d)return;let o=state.orders.find(x=>x.id===id);o.driver=d.name;o.status="Unterwegs";render();toast("Demo-Fahrer zugewiesen")}
+function changeStatus(id){let o=state.orders.find(x=>x.id===id);let s=prompt("Neuer Status: Fahrer gesucht / Unterwegs / Abgeschlossen",o.status);if(["Fahrer gesucht","Unterwegs","Abgeschlossen"].includes(s)){o.status=s;render();toast("Status aktualisiert")}}
+function addDriver(){let n=prompt("Name des Fahrers:");if(!n)return;let v=prompt("Fahrzeug:")||"Noch nicht zugewiesen";state.drivers.push({name:n,vehicle:v,status:"Offline"});render();toast("Demo-Fahrer hinzugefügt")}
+function addVehicle(){let p=prompt("Kennzeichen:");if(!p)return;let m=prompt("Fahrzeugmodell:")||"Unbekannt";state.vehicles.push({plate:p,model:m,driver:"Noch nicht zugewiesen",status:"Aktiv"});render();toast("Demo-Fahrzeug hinzugefügt")}
+function saveCompany(){state.company={name:$("#cname").value,city:$("#ccity").value,phone:$("#cphone").value,email:$("#cemail").value};toast("Unternehmensdaten in der Demo übernommen")}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));render();
+</script></body></html>
