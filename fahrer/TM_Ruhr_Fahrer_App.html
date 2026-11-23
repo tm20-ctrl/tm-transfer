@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TM Ruhr – Fahrer-App</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FBF7EE;--surface:#fff;--surface2:#F4EEDF;--ink:#2A2118;--muted:#6F6355;--accent:#E8890C;--line:#E6DDC8;--good:#2E7D4F;--warn:#9A5200;--bad:#B3261E}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Nunito,system-ui,sans-serif}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800}.logo{background:var(--accent);border-radius:12px;padding:7px 10px}
+.pill{border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:800}
+.banner{text-align:center;background:var(--surface2);color:var(--muted);padding:8px 12px;font-size:12px}
+main{max-width:480px;margin:20px auto;padding:0 14px 36px}.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:13px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.muted{color:var(--muted)}.small{font-size:13px}.big{font-size:29px;font-weight:800}.label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800;margin:10px 0 6px}
+button{font:inherit;cursor:pointer}.btn{width:100%;border:0;border-radius:99px;padding:14px;background:var(--accent);color:#2A1A05;font-weight:800;margin-top:8px}.btn.secondary{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}.btn.danger{background:#f7e5e1;color:#8b241e}
+.toggle{display:flex;align-items:center;gap:9px;font-weight:800}.toggle input{width:24px;height:24px;accent-color:var(--good)}
+.status{font-weight:800}.online{color:var(--good)}.offline{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:var(--surface2);padding:12px;border-radius:16px}.stat b{display:block;font-size:21px}
+.route{border-left:4px solid var(--accent);padding:4px 0 4px 13px;margin:12px 0}.route div+div{margin-top:12px}
+.actions{display:flex;gap:8px}.actions button{flex:1}
+nav{display:flex;gap:7px;overflow:auto;margin-bottom:14px}nav button{border:1px solid var(--line);border-radius:99px;background:var(--surface);padding:9px 13px;font-weight:800;white-space:nowrap}nav button.active{background:var(--accent);border-color:var(--accent)}
+input,select,textarea{font:inherit;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:14px;background:var(--surface2);color:var(--ink);margin:5px 0 10px}
+.list{padding-left:20px;margin:8px 0}.list li{margin:7px 0}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 16px;border-radius:99px;display:none;max-width:90%;text-align:center}
+.chatmsg{background:var(--surface2);padding:9px 12px;border-radius:16px;margin:7px 0}.chatmsg.me{background:#f7e4c8;text-align:right}
+@media(min-width:700px){main{margin-top:28px}.card{padding:18px}}
+</style>
+</head>
+<body>
+<header><div class="brand"><span class="logo">TM</span> TM Ruhr <span class="pill">Fahrer-App · Demo</span></div><span class="pill">🚕 Fahrer</span></header>
+<div class="banner">Demo mit Beispieldaten. Anfragen, Umsätze, Chat und Dokumente sind nicht mit einem echten System verbunden.</div>
+<main>
+<nav>
+<button class="active" data-tab="home">Übersicht</button><button data-tab="rides">Fahrten</button><button data-tab="earnings">Verdienst</button><button data-tab="profile">Profil</button>
+</nav>
+<section id="view"></section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+const state={online:false,tab:"home",screen:"idle",request:0,rides:0,gross:0,history:[],messages:[],driver:"Murat K.",vehicle:"Mercedes E-Klasse",plate:"E-NX 1204",company:"Taxi Beispiel Essen"};
+const requests=[
+ {from:"Essen Hbf",to:"Bochum Hbf",km:"12,9 km",price:40.40,passenger:"Anna"},
+ {from:"Rüttenscheid, Girardetstr.",to:"Flughafen Düsseldorf",km:"27,0 km",price:79.90,passenger:"Helga"},
+ {from:"Dortmund Hbf",to:"Westfalenpark",km:"6,1 km",price:21.40,passenger:"Tim"}
+];
+let timer=null;
+function money(n){return n.toLocaleString("de-DE",{style:"currency",currency:"EUR"})}
+function toast(t){let x=$("#toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",2400)}
+function current(){return requests[state.request%requests.length]}
+function requestCard(){let r=current();return `<div class="card"><div class="row"><b>Neue Fahrtanfrage</b><span class="pill">Demo-Auftrag</span></div><div class="route"><div><span class="small muted">ABHOLUNG</span><br><b>${r.from}</b></div><div><span class="small muted">ZIEL</span><br><b>${r.to}</b></div></div><div class="grid"><div class="stat"><span class="small muted">Strecke</span><b>${r.km}</b></div><div class="stat"><span class="small muted">Fahrpreis (Beispiel)</span><b>${money(r.price)}</b></div></div><p class="small muted">Fahrgast: ${r.passenger}. In dieser Demo wird die Anfrage simuliert.</p><div class="actions"><button class="btn" onclick="acceptRide()">Annehmen</button><button class="btn secondary" onclick="skipRide()">Ablehnen</button></div></div>`}
+function home(){let h=`<div class="card"><div class="row"><div><b>Fahrerstatus</b><div class="status ${state.online?'online':'offline'}">${state.online?'● Online – bereit für Aufträge':'○ Offline'}</div></div><label class="toggle"><input id="online" type="checkbox" ${state.online?'checked':''}> Online</label></div><p class="small muted">Schalte dich online, um in dieser Demo Fahrtanfragen zu erhalten.</p></div>`;
+h+=`<div class="grid"><div class="stat"><span class="small muted">Fahrten heute</span><b>${state.rides}</b></div><div class="stat"><span class="small muted">Dein Verdienst*</span><b>${money(state.gross*.92)}</b></div></div><p class="small muted">*Beispielrechnung nach 8 % Demo-Plattformgebühr.</p>`;
+if(state.screen==="request")h+=requestCard();
+else if(state.screen==="chosen")h+=`<div class="card"><span class="pill">Auftrag bestätigt</span><h2>Du wurdest ausgewählt!</h2><div class="route"><div><span class="small muted">ABHOLUNG</span><br><b>${current().from}</b></div><div><span class="small muted">ZIEL</span><br><b>${current().to}</b></div></div><p>Fahrgast: ${current().passenger}</p><button class="btn" onclick="startRide()">Fahrgast eingestiegen</button><button class="btn secondary" onclick="openChat()">Fahrgast kontaktieren</button></div>`;
+else if(state.screen==="ride")h+=`<div class="card"><span class="pill">Fahrt läuft</span><h2>Unterwegs nach ${current().to}</h2><p class="muted">Die echte Navigation wird später angebunden.</p><button class="btn secondary" onclick="toast('Navigation wird später verbunden.')">Navigation öffnen</button><button class="btn secondary" onclick="openChat()">Fahrgast kontaktieren</button><button class="btn" onclick="finishRide()">Fahrt beenden</button></div>`;
+else if(state.screen==="done")h+=`<div class="card"><span class="pill">Abgeschlossen</span><h2>Fahrt beendet</h2><div class="row"><span>Fahrpreis</span><b>${money(current().price)}</b></div><div class="row"><span>Demo-Gebühr (8 %)</span><b>−${money(current().price*.08)}</b></div><div class="row"><b>Dein Anteil</b><b>${money(current().price*.92)}</b></div><button class="btn" onclick="nextRide()">Zur Übersicht</button></div>`;
+else h+=`<div class="card"><b>Keine offene Anfrage</b><p class="small muted">${state.online?'Du bist online. Die nächste Demo-Anfrage erscheint gleich.':'Gehe online, um Anfragen zu erhalten.'}</p></div>`;
+return h}
+function rides(){return `<div class="card"><h2>Meine Fahrten</h2><p class="small muted">Deine abgeschlossenen Demo-Fahrten.</p>${state.history.length?state.history.slice().reverse().map(x=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div><b>${x.from} → ${x.to}</b><div class="small muted">${x.date}</div></div><b>${money(x.price)}</b></div>`).join(""):'<p class="muted">Noch keine abgeschlossenen Fahrten.</p>'}</div>`}
+function earnings(){return `<div class="card"><h2>Verdienstübersicht</h2><div class="grid"><div class="stat"><span class="small muted">Brutto heute</span><b>${money(state.gross)}</b></div><div class="stat"><span class="small muted">Dein Anteil</span><b>${money(state.gross*.92)}</b></div><div class="stat"><span class="small muted">Demo-Gebühr</span><b>${money(state.gross*.08)}</b></div><div class="stat"><span class="small muted">Fahrten</span><b>${state.rides}</b></div></div><p class="small muted">Alle Beträge sind Beispieldaten. Die tatsächliche Abrechnung wird später festgelegt.</p></div>`}
+function profile(){return `<div class="card"><h2>Fahrerprofil</h2><label class="label">Name</label><input value="${state.driver}" id="driverName"><label class="label">Unternehmen</label><input value="${state.company}" id="company"><label class="label">Fahrzeug</label><input value="${state.vehicle}" id="vehicle"><label class="label">Kennzeichen</label><input value="${state.plate}" id="plate"><button class="btn" onclick="saveProfile()">Profil speichern</button></div><div class="card"><h3>Dokumente</h3><p class="small muted">Hier sollen später Fahrerlaubnis, Personenbeförderungsschein, Führerschein und Fahrzeugunterlagen sicher hinterlegt werden.</p><ul class="list"><li>Führerschein – noch nicht hochgeladen</li><li>Personenbeförderungsschein – noch nicht hochgeladen</li><li>Fahrzeugdokumente – noch nicht hochgeladen</li></ul><button class="btn secondary" onclick="toast('Dokumenten-Upload wird später ergänzt.')">Dokument hochladen</button></div>`}
+function render(){$("#view").innerHTML=state.tab==="home"?home():state.tab==="rides"?rides():state.tab==="earnings"?earnings():profile();document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.tab));let o=$("#online");if(o)o.onchange=()=>setOnline(o.checked)}
+function setOnline(v){state.online=v;if(v&&state.screen==="idle"){state.screen="request";toast("Neue Demo-Fahrtanfrage");}if(!v&&state.screen==="request")state.screen="idle";render()}
+function acceptRide(){state.screen="chosen";toast("Demo-Auftrag angenommen");render()}
+function skipRide(){state.request++;state.screen="idle";toast("Anfrage abgelehnt");render();if(state.online)setTimeout(()=>{if(state.online&&state.screen==="idle"){state.screen="request";render()}},1800)}
+function startRide(){state.screen="ride";render()}
+function finishRide(){let r=current();state.rides++;state.gross+=r.price;state.history.push({...r,date:new Date().toLocaleString("de-DE")});state.screen="done";render()}
+function nextRide(){state.request++;state.screen="idle";render()}
+function saveProfile(){state.driver=$("#driverName").value;state.company=$("#company").value;state.vehicle=$("#vehicle").value;state.plate=$("#plate").value;toast("Profil in dieser Demo aktualisiert");render()}
+function openChat(){let msg=prompt("Demo-Nachricht an den Fahrgast:");if(msg){state.messages.push(msg);toast("Nachricht in der Demo gesendet")}}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{state.tab=b.dataset.tab;render()}));
+render();
+</script>
+</body>
+</html>
