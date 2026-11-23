@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TM Ruhr Demo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚕%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: Kopfzeile mit drei Ansichten; Fahrgast und Fahrer im Telefonrahmen, Partner als breites Dashboard */
+:root{
+  --bg:#FBF7EE; --surface:#FFFFFF; --surface2:#F4EEDF; --ink:#2A2118; --muted:#6F6355;
+  --accent:#E8890C; --on-accent:#2A1A05; --line:#E6DDC8;
+  --good:#2E7D4F; --warn:#9A5200; --bad:#B3261E;
+  --map:#EFE8D6; --road:#FFFFFF; --park:#DDE6C8;
+  --font:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1712; --surface:#26211A; --surface2:#302A21; --ink:#F5EEDF; --muted:#B3A590;
+    --accent:#F0A030; --on-accent:#2A1A05; --line:#3B3428;
+    --good:#6FCF97; --warn:#F2B35E; --bad:#FF8A80;
+    --map:#2C261D; --road:#3E3629; --park:#2B3323; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1712; --surface:#26211A; --surface2:#302A21; --ink:#F5EEDF; --muted:#B3A590;
+  --accent:#F0A030; --on-accent:#2A1A05; --line:#3B3428;
+  --good:#6FCF97; --warn:#F2B35E; --bad:#FF8A80;
+  --map:#2C261D; --road:#3E3629; --park:#2B3323; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px}
+.logo{width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:800}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.pill.good{color:var(--good)} .pill.warn{color:var(--warn)} .pill.bad{color:var(--bad)} .pill.acc{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px;font-weight:700}
+.tab[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.banner{margin:0;padding:8px 16px;font-size:13px;color:var(--muted);background:var(--surface2);text-align:center}
+main{padding:20px 16px 40px;display:flex;justify-content:center}
+.phone{width:100%;max-width:390px;height:780px;background:var(--bg);border:8px solid var(--ink);border-radius:40px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.phead{padding:14px 18px 8px;display:flex;align-items:center;justify-content:space-between;background:var(--bg)}
+.phead h2{font-size:20px;font-weight:800}
+.pbody{flex:1;overflow-y:auto;padding:0 16px 16px}
+.pnav{display:flex;border-top:1px solid var(--line);background:var(--surface)}
+.pnav button{flex:1;border:0;background:none;padding:12px 4px;font-weight:700;font-size:13px;color:var(--muted)}
+.pnav button[aria-current="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--accent)}
+.map{height:210px;border-radius:24px;overflow:hidden;margin:4px 0 12px;border:1px solid var(--line)}
+.map svg{display:block;width:100%;height:100%}
+.sheet,.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px;margin-bottom:12px}
+.lbl{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
+.lbl:first-child{margin-top:0}
+.field{padding:10px 14px;border-radius:16px;background:var(--surface2);border:1px solid var(--line)}
+input[type=text],input[type=tel],select{width:100%;padding:10px 14px;border-radius:16px;background:var(--surface2);border:1px solid var(--line);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface2);padding:4px;border-radius:99px;border:1px solid var(--line)}
+.seg button{border:0;background:none;border-radius:99px;padding:9px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.btn{width:100%;border:0;border-radius:99px;padding:14px;font-weight:800;background:var(--accent);color:var(--on-accent);margin-top:6px}
+.btn.sec{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.price{font-weight:800;font-variant-numeric:tabular-nums}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:20px;padding:14px;margin-bottom:10px}
+.opt[aria-pressed="true"]{border-color:var(--accent)}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:800;flex:none}
+.offer{display:flex;gap:12px;align-items:center;animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.offer{animation:none}}
+.bar{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.stars button{border:0;background:none;font-size:34px;color:var(--line);padding:0 4px}
+.stars button.on{color:var(--accent)}
+.toggle{display:flex;gap:10px;align-items:center;margin:8px 0}
+.toggle input{width:22px;height:22px;accent-color:var(--accent)}
+.steps{list-style:none;margin:8px 0 0;padding:0}
+.steps li{padding:6px 0 6px 22px;position:relative;font-size:14px}
+.steps li:before{content:"";position:absolute;left:0;top:12px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:700;font-size:14px;z-index:9;max-width:90vw}
+.dash{width:100%;max-width:1100px}
+.dtabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px}
+.kpi .big{display:block;margin-top:2px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding-top:10px;border-bottom:1px solid var(--line)}
+.chart div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:12px;color:var(--muted)}
+.chart i{display:block;width:100%;border-radius:10px 10px 0 0;background:var(--accent);opacity:.85}
+.chart div.today i{opacity:1;outline:2px solid var(--ink)}
+.alert{border-left:6px solid var(--warn);background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:16px;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.alert.ok{border-left-color:var(--good)}
+.prof{display:flex;align-items:center;gap:10px;border:0;background:none;padding:0;text-align:left}
+.prof b{display:block;line-height:1.1}.prof small{color:var(--muted);font-size:12px}
+.avatar.sm{width:38px;height:38px;font-size:14px}
+.spar{display:flex;justify-content:space-between;align-items:center;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:10px 16px;margin:4px 0 8px;font-weight:700}
+.spar b{color:var(--good);font-variant-numeric:tabular-nums}
+.earn{color:var(--good);font-weight:700;font-size:13px}
+.mini{font-size:12px;color:var(--muted);text-align:center;margin-top:20px}
+.chat{flex:1;min-height:0;display:flex;flex-direction:column}
+.chead{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.chead .grow{flex:1;min-width:0}
+.clist{flex:1;min-height:0;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.bub{max-width:80%;padding:8px 12px;border-radius:18px;background:var(--surface2);border:1px solid var(--line);align-self:flex-start;overflow-wrap:anywhere}
+.bub.me{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-color:transparent}
+.bub small{display:block;font-size:11px;opacity:.7;margin-top:2px}
+.csys{align-self:center;text-align:center;font-size:12px;color:var(--muted);margin:4px 0}
+.qr{display:flex;gap:6px;overflow-x:auto;padding:6px 14px 0}
+.qr .chip{white-space:nowrap;flex:none}
+.cbar{display:flex;gap:8px;padding:8px 14px 12px;align-items:center}
+.cbar input{margin:0;flex:1;min-width:0;border-radius:99px}
+.cbar .btn{width:auto;margin:0;padding:11px 18px}
+.badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--bad);color:var(--bg);font-size:12px;font-weight:800;margin-left:8px}
+
+@media(max-width:520px){main{padding:0}.phone{max-width:none;height:calc(100dvh - 112px);min-height:620px;border-width:0;border-radius:0}.top{padding:10px 14px}.banner{font-size:11px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">TM</span><span>TM Ruhr</span><span class="pill acc">Kunden-App · Demo</span></div>
+  <button class="tab" data-act="theme" id="themeBtn" aria-label="Hell oder dunkel umschalten">Hell/Dunkel</button>
+</header>
+<p class="banner">Eigenständige Kunden-Demo mit Beispieldaten. Noch keine echte Fahrervermittlung, Zahlung oder Live-Karte.</p>
+<main id="app"></main>
+<div class="mini">Echte Karte später: © OpenStreetMap-Mitwirkende</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ---------- Beispieldaten ---------- */
+var DEST=[
+  {n:'Essen Hbf',km:3.2,min:9},{n:'Bochum Hbf',km:12.4,min:19},{n:'Gelsenkirchen Hbf',km:11.1,min:18},
+  {n:'Duisburg Hbf',km:17.8,min:24},{n:'Dortmund Hbf',km:33.5,min:36}
+];
+var PICKUP='Rüttenscheider Str., Essen';
+var DRIVERS=[
+  {id:'d1',n:'Murat K.',r:4.9,rides:812,t:'taxi',car:'Mercedes E-Klasse',eta:3,firm:'Taxi Beispiel Essen'},
+  {id:'d2',n:'Ahmet Y.',r:4.7,rides:455,t:'taxi',car:'Toyota Prius',eta:4,firm:'Taxi Beispiel Essen'},
+  {id:'d3',n:'Dirk B.',r:4.8,rides:1290,t:'taxi',car:'Skoda Octavia',eta:6,firm:'Funk-Taxi Beispiel'},
+  {id:'d4',n:'Sabine L.',r:4.8,rides:603,t:'miet',car:'Skoda Superb',eta:5,firm:'Beispiel-Mobil Ruhr'},
+  {id:'d5',n:'Jana W.',r:5.0,rides:318,t:'miet',car:'Tesla Model 3',eta:6,firm:'Beispiel-Mobil Ruhr'},
+  {id:'d6',n:'Emre T.',r:4.6,rides:240,t:'miet',car:'VW Passat',eta:8,firm:'Beispiel-Mobil Ruhr'}
+];
+var REQS=[
+  {from:'Essen Hbf',to:'Bochum Hbf',km:12.9,fare:40.4,other:null},
+  {from:'Rüttenscheid, Girardetstr.',to:'Flughafen Düsseldorf',km:27.0,fare:79.9,other:'Helga (Mutter der Bestellerin)'},
+  {from:'Dortmund Hbf',to:'Westfalenpark',km:6.1,fare:21.4,other:null}
+];
+var LOYALTY=0.05, COMMISSION=0.08;
+var ME={n:'Anna Schmidt',s:'Anna S.',i:'AS'};
+var ROUTE=[[30,190],[110,165],[150,105],[250,88],[330,40]];
+
+/* ---------- Zustand ---------- */
+var S={
+  view:'pass',
+  p:{screen:'home',tab:'ride',dest:0,who:'me',oname:'',ophone:'',when:'now',day:0,time:'',vt:'taxi',meter:false,useCredit:true,
+     offers:[],left:12,driver:null,phase:'',prog:0,fare:0,used:0,rating:5,fav:false},
+  favs:[],credit:0,cap:0.5,ledger:[],history:[],bookings:[],
+  earn:{rides:0,gross:0,redeemed:0},
+  d:{online:false,screen:'idle',req:null,left:12,ri:0,today:{rides:0,gross:0}},
+  part:{tab:'over',bears:'platform'}
+};
+var TP=[],TD=[];
+/* ---------- Chat (nach bestätigter Fahrt) ---------- */
+var CID=0;
+/* Demo-Rufnummern: PH[w] ist die Nummer der Gegenseite. p = Fahrgast ruft Fahrer an, d = Fahrer ruft Fahrgast an. Später durch Proxy-Nummer vom Server ersetzen. */
+var PH={p:'+492015550142',d:'+492015550187'};
+var QR={p:['Ich stehe vor dem Eingang','Bitte kurz warten','Ich sehe Sie nicht'],d:['Bin gleich da','Stehe vor der Tür','Bin 5 Min. später']};
+var AUTO={d:['Alles klar, danke!','Okay, bis gleich.','Verstanden.'],p:['Alles klar, danke!','Okay, ich warte hier.','Gut, bis gleich.']};
+function chatKey(w){return w==='p'?'cp':'cd'}
+function chatBtn(w){var c=S[chatKey(w)];if(!c||!c.open)return '';return '<button class="btn sec" style="margin:0 0 12px" data-act="openChat" data-v="'+w+'">'+(w==='p'?'Fahrer schreiben':'Fahrgast schreiben')+(c.unread?'<span class="badge" aria-label="'+c.unread+' ungelesen">'+c.unread+'</span>':'')+'</button>'}
+function chatNew(w,intro){S[chatKey(w)]={id:++CID,show:false,open:true,msgs:[{k:'sys',t:intro}],unread:0,draft:'',n:0}}
+function chatClose(w){var c=S[chatKey(w)];if(c){c.open=false;c.show=false}}
+function chatName(w){if(w==='p'){var dr=DRIVERS.filter(function(x){return x.id===S.p.driver})[0];return dr?dr.n:'Fahrer'}var r=S.d.req;return r&&r.other?r.other.split(' ')[0]:'Anna'}
+function chatPush(w,from,text){var c=S[chatKey(w)];if(!c||!c.open)return;c.msgs.push({k:'m',from:from,t:text,at:hhmm(new Date())});
+  var mine=(w==='p'&&S.view==='pass')||(w==='d'&&S.view==='drv');
+  if(from!==w&&!c.show){c.unread++;if(mine)toast('Neue Nachricht von '+chatName(w)+': '+text)}
+  if(mine)render()}
+function chatSay(w,text){var c=S[chatKey(w)];if(!c||!c.open)return;chatPush(w,w,text);var id=c.id,o=w==='p'?'d':'p';
+  setTimeout(function(){var k=S[chatKey(w)];if(!k||k.id!==id||!k.open)return;k.n++;chatPush(w,o,AUTO[o][k.n%AUTO[o].length])},1600)}
+function sendChat(w){var c=S[chatKey(w)],t=c.draft.trim();if(!t)return;c.draft='';chatSay(w,t.slice(0,500));var i=document.getElementById('cmsg');if(i)i.focus()}
+function chatFrame(w){var c=S[chatKey(w)],nm=chatName(w);
+  var list=c.msgs.map(function(m){if(m.k==='sys')return '<div class="csys">'+esc(m.t)+'</div>';return '<div class="bub'+(m.from===w?' me':'')+'">'+esc(m.t)+'<small>'+m.at+' Uhr</small></div>'}).join('');
+  return '<div class="phone"><div class="phead"><button class="chip" data-act="chatBack" data-v="'+w+'">‹ Zurück</button><span class="pill">Chat</span></div><div class="chat">'+
+  '<div class="chead"><div class="avatar sm">'+esc(initials(nm))+'</div><div class="grow"><b>'+esc(nm)+'</b><div class="small muted">'+(w==='p'?'Dein Fahrer':'Dein Fahrgast')+'</div></div><a class="chip" style="text-decoration:none;color:inherit" href="tel:'+PH[w]+'" aria-label="'+esc(nm)+' anrufen">Anrufen</a></div>'+
+  '<div class="clist" id="clist" role="log" aria-live="polite">'+list+'</div>'+
+  '<div class="qr">'+QR[w].map(function(q,i){return '<button class="chip" data-act="chatQuick" data-v="'+w+'" data-i="'+i+'">'+esc(q)+'</button>'}).join('')+'</div>'+
+  '<div class="cbar"><input type="text" id="cmsg" data-bind="'+chatKey(w)+'.draft" placeholder="Nachricht schreiben" maxlength="500" autocomplete="off" aria-label="Nachricht" value="'+esc(c.draft)+'"><button class="btn" data-act="chatSend" data-v="'+w+'">Senden</button></div>'+
+  '</div></div>'}
+function clearT(b){b=b||TP;b.forEach(function(t){clearTimeout(t);clearInterval(t)});b.length=0}
+function later(fn,ms,b){b=b||TP;var t=setTimeout(fn,ms);b.push(t);return t}
+function every(fn,ms,b){b=b||TP;var t=setInterval(fn,ms);b.push(t);return t}
+
+/* ---------- Helfer ---------- */
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function eur(n){return n.toFixed(2).replace('.',',')+' €'}
+function fare(km,t){var v=t==='taxi'?4.3+2.8*km:3.9+2.5*km;return Math.round(v*10)/10}
+function pad(n){return n<10?'0'+n:''+n}
+function hhmm(d){return pad(d.getHours())+':'+pad(d.getMinutes())}
+function hhmmss(d){return hhmm(d)+':'+pad(d.getSeconds())}
+function earnOf(f){return Math.round(f*LOYALTY*100)/100}
+function meterEnd(){var p=S.p,d=DEST[p.dest],f=fare(d.km,'taxi'),v=Math.round(f*(0.95+Math.random()*0.12)*10)/10;p.fare=v;p.used=p.useCredit?usable(v):0;spend(p.used,'Eingelöst: Fahrt nach '+d.n);p.metered='done'}
+function usable(price){return Math.min(S.credit,Math.round(price*S.cap*100)/100)}
+function spend(amt,txt){if(amt>0){S.credit=Math.round((S.credit-amt)*100)/100;S.earn.redeemed+=amt;S.ledger.push({t:'use',txt:txt,amt:amt,at:hhmm(new Date())})}}
+function initials(n){return n.split(' ').map(function(x){return x[0]}).join('')}
+function setPath(path,v){var o=S,k=path.split('.');for(var i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=v}
+function parseV(v){if(v==='true')return true;if(v==='false')return false;if(/^\d+$/.test(v))return Number(v);return v}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(function(){t.hidden=true},2600)}
+function dayOpts(){var a=[],now=new Date();for(var i=0;i<7;i++){var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);
+  a.push(i===0?'Heute':i===1?'Morgen':d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}))}return a}
+function dayDate(i,time){var now=new Date(),p=time.split(':');return new Date(now.getFullYear(),now.getMonth(),now.getDate()+i,Number(p[0]),Number(p[1]),0)}
+function timeOpts(){var a=[];for(var h=5;h<24;h++)for(var m=0;m<60;m+=15)a.push(pad(h)+':'+pad(m));return a}
+function defaultTime(){var d=new Date(Date.now()+120*60000);d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);if(d.getDate()!==new Date().getDate())return '08:00';return hhmm(d)}
+S.p.time=defaultTime();
+
+/* ---------- Karte (Beispielbild) ---------- */
+function along(p){var segs=[],tot=0,i;for(i=0;i<ROUTE.length-1;i++){var l=Math.hypot(ROUTE[i+1][0]-ROUTE[i][0],ROUTE[i+1][1]-ROUTE[i][1]);segs.push(l);tot+=l}
+  var d=p*tot;for(i=0;i<segs.length;i++){if(d<=segs[i]){var t=d/segs[i];return [ROUTE[i][0]+(ROUTE[i+1][0]-ROUTE[i][0])*t,ROUTE[i][1]+(ROUTE[i+1][1]-ROUTE[i][1])*t]}d-=segs[i]}return ROUTE[ROUTE.length-1]}
+function mapSVG(car,route){
+  var pts=ROUTE.map(function(p){return p.join(',')}).join(' ');
+  var s='<svg viewBox="0 0 360 240" role="img" aria-label="Beispielkarte"><rect width="360" height="240" fill="var(--map)"/>'+
+  '<rect x="20" y="20" width="70" height="50" rx="12" fill="var(--park)"/><rect x="230" y="150" width="90" height="60" rx="14" fill="var(--park)"/>'+
+  '<g stroke="var(--road)" stroke-width="9" stroke-linecap="round" fill="none"><path d="M0 70 L360 110"/><path d="M0 150 L360 190"/><path d="M110 0 L130 240"/><path d="M250 0 L230 240"/><path d="M0 220 L200 120 L360 120"/></g>';
+  if(route)s+='<polyline points="'+pts+'" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 0"/>';
+  s+='<circle cx="'+ROUTE[0][0]+'" cy="'+ROUTE[0][1]+'" r="8" fill="var(--ink)"/><circle cx="'+ROUTE[0][0]+'" cy="'+ROUTE[0][1]+'" r="3" fill="var(--surface)"/>';
+  var e=ROUTE[ROUTE.length-1];s+='<rect x="'+(e[0]-8)+'" y="'+(e[1]-8)+'" width="16" height="16" rx="4" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/>';
+  if(car)s+='<circle cx="'+car[0]+'" cy="'+car[1]+'" r="11" fill="var(--accent)" stroke="var(--ink)" stroke-width="3"/><circle cx="'+car[0]+'" cy="'+car[1]+'" r="3" fill="var(--ink)"/>';
+  return s+'</svg>'}
+
+/* ---------- Fahrgast-App ---------- */
+function pNav(){var t=S.p.tab;function b(k,l){return '<button data-act="ptab" data-v="'+k+'"'+(t===k?' aria-current="true"':'')+'>'+l+'</button>'}
+  return '<nav class="pnav" aria-label="Fahrgast-Navigation">'+b('ride','Fahrt')+b('trips','Meine Fahrten')+b('loyal','Sparkonto')+b('help','Hilfe')+'</nav>'}
+function pFrame(title,body,nav){return '<div class="phone"><div class="phead"><button class="prof" data-act="openProfile" aria-label="Profil"><span class="avatar sm">'+ME.i+'</span><span><b>'+ME.s+'</b><small>Fahrgast</small></span></button><span class="pill">'+title+'</span></div><div class="pbody">'+body+'</div>'+(nav?pNav():'')+'</div>'}
+
+function passView(){
+  var p=S.p,sc=p.screen,tab=p.tab;
+  if(sc==='ride'&&S.cp&&S.cp.show)return chatFrame('p');
+  if(sc==='home'&&tab==='trips')return pFrame('Meine Fahrten',tripsHtml(),true);
+  if(sc==='home'&&tab==='loyal')return pFrame('Sparkonto',loyalHtml(),true);
+  if(sc==='profile')return pFrame('Profil',profileHtml(),false);
+  if(sc==='home'&&tab==='help')return pFrame('Hilfe',helpHtml(),true);
+  if(sc==='home')return pFrame('Wohin?',homeHtml(),true);
+  if(sc==='vehicle')return pFrame('Fahrzeug wählen',vehicleHtml(),false);
+  if(sc==='search')return pFrame('Fahrer wählen',searchHtml(),false);
+  if(sc==='ride')return pFrame('Deine Fahrt',rideHtml(),false);
+  if(sc==='rate')return pFrame('Fahrt beendet',rateHtml(),false);
+  if(sc==='booked')return pFrame('Vorbestellt',bookedHtml(),false);
+}
+function homeHtml(){var p=S.p,h='<button class="spar" data-act="ptab" data-v="loyal"><span>Sparkonto</span><b>'+eur(S.credit)+'</b></button><div class="map">'+mapSVG(null,false)+'</div><div class="sheet">';
+  h+='<span class="lbl">Abholung</span><div class="field">'+PICKUP+'</div>';
+  h+='<span class="lbl">Ziel</span><div class="chips">'+DEST.map(function(d,i){return '<button class="chip" data-act="set" data-k="p.dest" data-v="'+i+'" aria-pressed="'+(p.dest===i)+'">'+d.n+'</button>'}).join('')+'</div>';
+  h+='<span class="lbl">Für wen</span><div class="seg"><button data-act="set" data-k="p.who" data-v="me" aria-pressed="'+(p.who==='me')+'">Für mich</button><button data-act="set" data-k="p.who" data-v="other" aria-pressed="'+(p.who==='other')+'">Für andere Person</button></div>';
+  if(p.who==='other')h+='<span class="lbl">Mitfahrende Person</span><input type="text" id="oname" data-bind="p.oname" placeholder="Name, z. B. Helga" value="'+esc(p.oname)+'"><input type="tel" id="ophone" data-bind="p.ophone" placeholder="Handynummer für Abholung (optional)" value="'+esc(p.ophone)+'"><p class="small muted" style="margin:0">Der Fahrer sieht nur den Vornamen. Du zahlst und bekommst die Fahrtinfos.</p>';
+  h+='<span class="lbl">Wann</span><div class="seg"><button data-act="set" data-k="p.when" data-v="now" aria-pressed="'+(p.when==='now')+'">Sofort</button><button data-act="set" data-k="p.when" data-v="later" aria-pressed="'+(p.when==='later')+'">Vorbestellen</button></div>';
+  if(p.when==='later'){h+='<span class="lbl">Datum und Uhrzeit</span><select id="day" data-sel="p.day" aria-label="Datum">'+dayOpts().map(function(d,i){return '<option value="'+i+'"'+(p.day===i?' selected':'')+'>'+d+'</option>'}).join('')+'</select>'+
+    '<select id="time" data-sel="p.time" aria-label="Uhrzeit">'+timeOpts().map(function(t){return '<option'+(p.time===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select>'}
+  return h+'<button class="btn" data-act="toVehicle">Weiter</button></div>'}
+
+function vehicleHtml(){var p=S.p,d=DEST[p.dest],ft=fare(d.km,'taxi'),fm=fare(d.km,'miet'),sel=p.vt==='taxi'?ft:fm;
+  var meter=p.vt==='taxi'&&p.meter,ca=meter?'ca. ':'',use=p.useCredit?usable(sel):0;
+  var h='<div class="map">'+mapSVG(null,true)+'</div>';
+  h+='<div class="row small muted" style="margin-bottom:8px"><span>'+PICKUP+' nach '+d.n+'</span><span>'+d.km.toFixed(1).replace('.',',')+' km</span></div>';
+  h+='<button class="opt" data-act="set" data-k="p.vt" data-v="taxi" aria-pressed="'+(p.vt==='taxi')+'"><div class="row"><b>Taxi</b><span class="price">'+(p.meter?'ca. ':'')+eur(ft)+'</span></div><div class="small muted">Tarifgebunden, Taxameter. '+(p.when==='now'?'Fahrer in ca. 3 Min':'Feste Zuteilung')+'</div><div class="earn">Du erhältst +'+eur(earnOf(ft-(p.useCredit?usable(ft):0)))+' aufs Sparkonto</div></button>';
+  h+='<button class="opt" data-act="set" data-k="p.vt" data-v="miet" aria-pressed="'+(p.vt==='miet')+'"><div class="row"><b>Mietwagen</b><span class="price">'+eur(fm)+'</span></div><div class="small muted">Festpreis vorab. '+(p.when==='now'?'Fahrer in ca. 5 Min':'Auftrag geht zuerst an das Unternehmen')+'</div><div class="earn">Du erhältst +'+eur(earnOf(fm-(p.useCredit?usable(fm):0)))+' aufs Sparkonto</div></button>';
+  if(p.vt==='taxi')h+='<div class="card"><label class="toggle" style="margin-top:0"><input type="checkbox" data-bind-chk="p.meter"'+(p.meter?' checked':'')+'><span>Fahrt nach Taxameter abrechnen</span></label><div class="small muted">'+(p.meter?'Kein Festpreis. Der Preis oben ist nur eine Schätzung. Du zahlst am Ende den Betrag, den das Taxameter anzeigt.':'Für Taxis ohne Festpreis: Der Fahrpreis wird dann nach Tarif per Taxameter berechnet.')+'</div></div>';
+  if(S.credit>0)h+='<div class="card"><label class="toggle" style="margin-top:0"><input type="checkbox" data-bind-chk="p.useCredit"'+(p.useCredit?' checked':'')+'><span>Sparkonto nutzen (−'+eur(usable(sel))+')</span></label><div class="small muted">Guthaben '+eur(S.credit)+'. Pro Fahrt sind höchstens '+Math.round(S.cap*100)+' % vom Preis möglich, hier bis '+eur(Math.round(sel*S.cap*100)/100)+'. Den Rest zahlst du.</div></div>';
+  if(p.who==='other')h+='<p class="small muted">Fahrt für '+esc(p.oname||'eine andere Person')+'. Du bleibst Auftraggeber und Zahler.</p>';
+  if(p.when==='later'){var days=dayOpts();h+='<div class="card"><b>'+days[p.day]+', '+p.time+' Uhr</b><div class="small muted">Verlässliche Vorbestellung: fester Fahrer, Erinnerung 30 Minuten vorher, Ersatzfahrer falls nötig. Kostenlos stornierbar bis 60 Minuten vorher.</div></div>'}
+  h+='<div class="row" style="margin:10px 0 0"><span>'+(meter?'Du zahlst voraussichtlich':'Du zahlst')+'</span><span class="big">'+ca+eur(sel-use)+'</span></div><div class="row small" style="margin-bottom:10px"><span class="muted">Sparkonto für diese Fahrt (5 % von '+ca+eur(sel-use)+')</span><span class="earn">+'+ca+eur(earnOf(sel-use))+'</span></div>';
+  h+='<button class="btn" data-act="'+(p.when==='now'?'startSearch':'confirmBooking')+'">'+(p.when==='now'?'Fahrer suchen':'Vorbestellung bestätigen')+'</button><button class="btn sec" data-act="back">Zurück</button>';return h}
+
+function searchHtml(){var p=S.p,h='<div class="card"><div class="row"><b>Interessierte Fahrer</b><span class="pill">noch '+p.left+' s</span></div><div class="bar" style="margin-top:8px"><i style="width:'+((12-p.left)/12*100)+'%"></i></div><p class="small muted" style="margin:8px 0 0">Du wählst. Nach kurzer Zeit schlagen wir sonst den schnellsten Fahrer vor.</p></div>';
+  if(!p.offers.length)h+='<div class="card muted">Fahrer in deiner Nähe werden angefragt …</div>';
+  p.offers.forEach(function(o){var dr=DRIVERS.filter(function(x){return x.id===o})[0],fv=S.favs.indexOf(o)>-1;
+    h+='<div class="card offer"><div class="avatar">'+initials(dr.n)+'</div><div style="flex:1"><b>'+dr.n+(fv?' <span class="pill acc">Lieblingsfahrer</span>':'')+'</b><div class="small muted">'+dr.car+' · '+dr.r.toFixed(1).replace('.',',')+' ★ · '+dr.rides+' Fahrten</div><div class="small muted">'+dr.firm+' · '+dr.eta+' Min</div></div><button class="chip" data-act="pick" data-v="'+dr.id+'">Wählen</button></div>'});
+  if(p.offers.length)h+='<button class="btn sec" data-act="fastest">Schnellsten Fahrer wählen</button>';
+  return h+'<button class="btn sec" data-act="cancelSearch">Abbrechen</button>'}
+
+function rideHtml(){var p=S.p,dr=DRIVERS.filter(function(x){return x.id===p.driver})[0],d=DEST[p.dest],car,txt;
+  if(p.phase==='pickup'){var a=[10,120],b=ROUTE[0];car=[a[0]+(b[0]-a[0])*p.prog,a[1]+(b[1]-a[1])*p.prog];txt='Fahrer kommt: noch '+Math.max(1,Math.round(dr.eta*(1-p.prog)))+' Min'}
+  else{car=along(p.prog);txt='Unterwegs nach '+d.n+': noch '+Math.max(1,Math.round(d.min*(1-p.prog)))+' Min'}
+  return '<div class="map">'+mapSVG(car,true)+'</div><div class="card"><div class="row"><b>'+txt+'</b></div><div class="bar" style="margin-top:8px"><i style="width:'+Math.round(p.prog*100)+'%"></i></div></div>'+
+  '<div class="card offer"><div class="avatar">'+initials(dr.n)+'</div><div style="flex:1"><b>'+dr.n+'</b><div class="small muted">'+dr.car+' · '+dr.firm+'</div></div><span class="pill '+(dr.t==='taxi'?'':'acc')+'">'+(dr.t==='taxi'?'Taxi':'Mietwagen')+'</span></div>'+
+  chatBtn('p')+(p.who==='other'?'<div class="card small">Mitfahrende Person: <b>'+esc(p.oname||'Gast')+'</b>. Du erhältst Updates zur Fahrt.</div>':'')+
+  (p.metered==='run'?'<div class="card"><div class="row"><span>Taxameter</span><span class="price">'+(p.phase==='trip'?eur(Math.round(fare(d.km,'taxi')*p.prog*10)/10):'startet bei Fahrtbeginn')+'</span></div><div class="small muted">Abrechnung nach Taxameter, kein Festpreis. Schätzung vorab: ca. '+eur(p.fare)+'. Den Endbetrag siehst du nach der Fahrt.</div></div>':'<div class="card"><div class="row"><span>Fahrpreis'+(p.metered?' (Taxameter)':'')+'</span><span class="price">'+eur(p.fare)+'</span></div>'+(p.used>0?'<div class="row small muted"><span>Treue-Guthaben</span><span>−'+eur(p.used)+'</span></div>':'')+'<div class="row"><b>Du zahlst</b><b class="price">'+eur(p.fare-p.used)+'</b></div><div class="row small"><span class="muted">Sparkonto nach der Fahrt (5 % vom bezahlten Betrag)</span><span class="earn">+'+eur(earnOf(p.fare-p.used))+'</span></div></div>')}
+
+function rateHtml(){var p=S.p,dr=DRIVERS.filter(function(x){return x.id===p.driver})[0],earn=earnOf(p.fare-p.used),st='';
+  for(var i=1;i<=5;i++)st+='<button class="'+(i<=p.rating?'on':'')+'" data-act="set" data-k="p.rating" data-v="'+i+'" aria-label="'+i+' Sterne">★</button>';
+  return '<div class="card" style="text-align:center"><div class="avatar" style="margin:0 auto 8px">'+initials(dr.n)+'</div><b>Wie war die Fahrt mit '+dr.n+'?</b><div class="stars" style="margin:6px 0">'+st+'</div>'+
+  '<label class="toggle" style="justify-content:center"><input type="checkbox" data-bind-chk="p.fav"'+(p.fav?' checked':'')+'><span>Als Lieblingsfahrer merken</span></label></div>'+
+  (p.metered?'<div class="card"><div class="row"><span>Endpreis laut Taxameter</span><span class="price">'+eur(p.fare)+'</span></div>'+(p.used>0?'<div class="row small muted"><span>Treue-Guthaben</span><span>−'+eur(p.used)+'</span></div>':'')+'<div class="row"><b>Du zahlst</b><b class="price">'+eur(p.fare-p.used)+'</b></div></div>':'')+
+  '<div class="card"><div class="row"><b>Treue-Guthaben</b><span class="pill good">+'+eur(earn)+'</span></div><div class="small muted">5 % vom bezahlten Betrag ('+eur(p.fare-p.used)+') kommen auf dein Guthaben.</div></div>'+
+  '<button class="btn" data-act="finishRate">Fertig</button>'}
+
+function bookedHtml(){var b=S.bookings[S.bookings.length-1];
+  return '<div class="card"><div class="row"><b>Vorbestellung bestätigt</b><span class="pill good">fest</span></div><div class="big" style="margin-top:6px">'+b.when+'</div><div class="muted">'+b.from+' nach '+b.to+'</div>'+
+  '<ul class="steps"><li>Eingegangen am '+b.stamp+(b.t==='miet'?' beim Unternehmen '+b.firm+' (Betriebssitz)':'')+'</li><li>Fahrer fest zugeteilt: '+b.driver+', '+b.car+'</li><li>Erinnerung 30 Minuten vorher</li><li>Ersatzfahrer wird automatisch gestellt, falls der Fahrer ausfällt</li></ul>'+
+  (b.other?'<p class="small muted">Mitfahrende Person: '+esc(b.other)+'</p>':'')+
+  '<div class="row" style="margin-top:8px"><span>Preis</span><span class="price">'+eur(b.price)+'</span></div></div>'+
+  '<button class="btn" data-act="goTrips">Zu meinen Fahrten</button>'}
+
+function tripsHtml(){var h='<span class="lbl">Vorbestellungen</span>';
+  if(!S.bookings.length)h+='<div class="card muted small">Noch keine Vorbestellung. Wähle auf dem Startbildschirm „Vorbestellen“.</div>';
+  S.bookings.forEach(function(b,i){h+='<div class="card"><div class="row"><b>'+b.when+'</b><span class="pill '+(b.cancelled?'bad':'good')+'">'+(b.cancelled?'storniert':'bestätigt')+'</span></div><div class="small muted">'+b.from+' nach '+b.to+' · '+b.driver+' · '+(b.meter?'ca. ':'')+eur(b.price)+(b.meter?' (Taxameter)':'')+'</div>'+(b.cancelled?'':'<button class="chip" style="margin-top:8px" data-act="cancelBooking" data-v="'+i+'">Stornieren</button>')+'</div>'});
+  h+='<span class="lbl">Abgeschlossen</span>';
+  if(!S.history.length)h+='<div class="card muted small">Noch keine Fahrt beendet. Starte eine Fahrt mit „Sofort“.</div>';
+  S.history.slice().reverse().forEach(function(r){h+='<div class="card"><div class="row"><b>'+r.to+'</b><span class="price">'+eur(r.paid)+'</span></div><div class="small muted">'+r.driver+' · '+r.at+' · '+r.rating+' ★</div></div>'});
+  return h}
+
+function loyalHtml(){var tot=0,used=0;S.ledger.forEach(function(l){if(l.t==='earn')tot+=l.amt;else used+=l.amt});
+  var h='<div class="card"><span class="muted small">Dein Sparkonto</span><div class="big">'+eur(S.credit)+'</div><div class="row small" style="margin-top:6px"><span class="muted">Gesammelt gesamt</span><span class="earn">+'+eur(tot)+'</span></div><div class="row small"><span class="muted">Eingelöst gesamt</span><span>−'+eur(used)+'</span></div></div>';
+  h+='<div class="card"><b>So funktioniert es</b><ul class="steps"><li>Jede Fahrt bringt 5 % vom bezahlten Betrag aufs Sparkonto.</li><li>Bei der nächsten Buchung kannst du das Guthaben nutzen.</li><li>Pro Fahrt sind höchstens '+Math.round(S.cap*100)+' % vom Preis rabattierbar. Eine Fahrt wird nie ganz kostenlos.</li></ul><table><tbody>'+[10,25,40].map(function(x){return '<tr><td>Fahrt für '+eur(x)+'</td><td class="earn">+'+eur(earnOf(x))+'</td><td class="muted small">max. −'+eur(x*S.cap)+'</td></tr>'}).join('')+'</tbody></table></div>';
+  h+='<span class="lbl">Verlauf</span>';
+  if(!S.ledger.length)h+='<div class="card muted small">Noch keine Buchung. Nach deiner ersten Fahrt erscheint hier dein Guthaben.</div>';
+  S.ledger.slice().reverse().forEach(function(l){h+='<div class="card"><div class="row"><span>'+l.txt+'</span><b class="'+(l.t==='earn'?'earn':'price')+'">'+(l.t==='earn'?'+':'−')+eur(l.amt)+'</b></div><div class="small muted">'+l.at+' Uhr</div></div>'});
+  h+='<span class="lbl">Lieblingsfahrer</span>';
+  if(!S.favs.length)h+='<div class="card muted small">Nach einer Fahrt kannst du Fahrer als Lieblingsfahrer merken. Sie werden dir bei der Auswahl zuerst angezeigt.</div>';
+  S.favs.forEach(function(id){var dr=DRIVERS.filter(function(x){return x.id===id})[0];h+='<div class="card offer"><div class="avatar">'+initials(dr.n)+'</div><div><b>'+dr.n+'</b><div class="small muted">'+dr.car+'</div></div></div>'});
+  return h}
+function profileHtml(){return '<div class="card" style="text-align:center"><div class="avatar" style="margin:0 auto 8px;width:64px;height:64px;font-size:22px">'+ME.i+'</div><b>'+ME.n+'</b><div class="small muted">Beispielprofil</div></div><div class="card"><div class="row"><span class="muted">Zahlart</span><span>Karte (Demo)</span></div><div class="row"><span class="muted">Fahrten</span><span>'+S.history.length+'</span></div><div class="row"><span class="muted">Lieblingsfahrer</span><span>'+S.favs.length+'</span></div><div class="row"><span class="muted">Sparkonto</span><b class="earn">'+eur(S.credit)+'</b></div></div><button class="btn" data-act="ptab" data-v="loyal">Zum Sparkonto</button><button class="btn sec" data-act="back">Zurück</button>'}
+function helpHtml(){return '<div class="card"><b>Fahrer ist nicht gekommen</b><div class="small muted">Bei Vorbestellungen stellen wir automatisch einen Ersatzfahrer. Du siehst die Zuteilung unter „Meine Fahrten“.</div></div><div class="card"><b>Fahrt für jemand anderen</b><div class="small muted">Gib beim Buchen den Namen der Person an. Der Fahrer sieht nur den Vornamen.</div></div><div class="card"><b>Sparkonto</b><div class="small muted">5 % vom bezahlten Betrag jeder Fahrt. Verrechnung bei der nächsten Buchung, höchstens bis zur Grenze pro Fahrt.</div></div><button class="btn sec" data-act="toast" data-v="Demo: hier öffnet sich der Support-Chat.">Support kontaktieren</button>'}
+
+/* ---------- Fahrgast-Logik ---------- */
+function startSearch(){var p=S.p,pool=DRIVERS.filter(function(x){return x.t===p.vt});
+  pool.sort(function(a,b){return (S.favs.indexOf(b.id)>-1)-(S.favs.indexOf(a.id)>-1)||a.eta-b.eta});
+  p.screen='search';p.offers=[];p.left=12;clearT();render();
+  [600,3500,7000].forEach(function(ms,i){if(pool[i])later(function(){if(S.p.screen==='search'){S.p.offers.push(pool[i].id);render()}},ms)});
+  every(function(){if(S.p.screen!=='search')return;S.p.left--;if(S.p.left<=0){clearT();if(S.p.offers.length)pickFastest();else{S.p.screen='home';toast('Keine Fahrer gefunden. Bitte erneut versuchen.');render();return}}else render()},1000)}
+function pickFastest(){var o=S.p.offers.map(function(id){return DRIVERS.filter(function(x){return x.id===id})[0]}).sort(function(a,b){return a.eta-b.eta});pick(o[0].id)}
+function pick(id){var p=S.p,d=DEST[p.dest];clearT();p.driver=id;p.fare=fare(d.km,p.vt);p.metered=(p.vt==='taxi'&&p.meter)?'run':'';p.used=(p.metered||!p.useCredit)?0:usable(p.fare);if(!p.metered)spend(p.used,'Eingelöst: Fahrt nach '+d.n);
+  p.screen='ride';p.phase='pickup';p.prog=0;chatNew('p','Fahrt bestätigt. Du kannst jetzt mit deinem Fahrer schreiben. Telefonnummern bleiben verborgen.');var cid=S.cp.id;setTimeout(function(){if(S.cp&&S.cp.id===cid)chatPush('p','d','Hallo, ich bin unterwegs zu Ihnen.')},2500);render();
+  every(function(){var p=S.p;p.prog+=p.phase==='pickup'?0.04:0.025;
+    if(p.prog>=1){if(p.phase==='pickup'){p.phase='trip';p.prog=0}else{clearT();if(p.metered)meterEnd();p.screen='rate';p.rating=5;p.fav=S.favs.indexOf(p.driver)>-1;chatClose('p')}}if(!(S.cp&&S.cp.show))render()},300)}
+function finishRate(){var p=S.p,dr=DRIVERS.filter(function(x){return x.id===p.driver})[0],earn=earnOf(p.fare-p.used);
+  S.credit=Math.round((S.credit+earn)*100)/100;S.ledger.push({t:'earn',txt:'Fahrt nach '+DEST[p.dest].n+' (bezahlt '+eur(p.fare-p.used)+')',amt:earn,at:hhmm(new Date())});S.earn.rides++;S.earn.gross+=p.fare;
+  S.history.push({to:DEST[p.dest].n,driver:dr.n,paid:p.fare-p.used,at:hhmm(new Date()),rating:p.rating});
+  var i=S.favs.indexOf(p.driver);if(p.fav&&i<0)S.favs.push(p.driver);if(!p.fav&&i>-1)S.favs.splice(i,1);
+  p.screen='home';p.tab='loyal';toast('+'+eur(earn)+' Treue-Guthaben');render()}
+function confirmBooking(){var p=S.p,d=DEST[p.dest],f=fare(d.km,p.vt),dt=dayDate(p.day,p.time);
+  if(dt.getTime()<Date.now()+60*60000){toast('Vorbestellungen brauchen mindestens 60 Minuten Vorlauf.');return}
+  var pool=DRIVERS.filter(function(x){return x.t===p.vt}),dr=(pool.filter(function(x){return S.favs.indexOf(x.id)>-1})[0]||pool[0]);
+  var meter=p.vt==='taxi'&&p.meter,used=p.useCredit?usable(f):0;spend(used,'Eingelöst: Vorbestellung nach '+d.n);
+  S.bookings.push({when:dayOpts()[p.day]+', '+p.time+' Uhr',ts:dt.getTime(),from:PICKUP,to:d.n,t:p.vt,price:f-used,fare:f,meter:meter,driver:dr.n,car:dr.car,firm:dr.firm,stamp:new Date().toLocaleString('de-DE'),other:p.who==='other'?(p.oname||'Gast'):'',cancelled:false});
+  p.screen='booked';render()}
+
+/* ---------- Fahrer-App ---------- */
+function drvView(){var d=S.d,h='';
+  if(S.cd&&S.cd.show&&(d.screen==='chosen'||d.screen==='ride'))return chatFrame('d');
+  h+='<div class="card"><div class="row"><div><b>Mercedes E-Klasse</b><div class="small muted">Taxi Beispiel Essen · E-NX 1204</div></div><label class="toggle" style="margin:0"><input type="checkbox" data-bind-chk="d.online"'+(d.online?' checked':'')+' aria-label="Online"><span>'+(d.online?'Online':'Offline')+'</span></label></div></div>';
+  if(d.screen==='idle'){
+    h+='<div class="card"><span class="muted small">Heute</span><div class="row"><span class="big">'+eur(d.today.gross*(1-COMMISSION))+'</span><span class="muted">'+d.today.rides+' Fahrten</span></div><div class="small muted">Nach '+Math.round(COMMISSION*100)+' % Provision (Beispiel)</div></div>';
+    var mine=S.bookings.filter(function(b){return b.t==='taxi'&&!b.cancelled});
+    h+='<span class="lbl">Feste Vorbestellungen</span>';
+    if(!mine.length)h+='<div class="card muted small">Keine. Vorbestellungen aus der Fahrgast-App erscheinen hier.</div>';
+    mine.forEach(function(b){h+='<div class="card"><div class="row"><b>'+b.when+'</b><span class="pill good">fest</span></div><div class="small muted">'+b.from+' nach '+b.to+(b.other?' · für '+esc(b.other):'')+'</div></div>'});
+    h+=d.online?'<div class="card muted small">Du bist online. Gleich kommt eine Anfrage.</div>':'<div class="card muted small">Gehe online, um Anfragen zu erhalten.</div>'}
+  if(d.screen==='request'){var r=d.req;h+='<div class="card"><div class="row"><b>Neue Anfrage</b><span class="pill warn">noch '+d.left+' s</span></div><div class="bar" style="margin:8px 0"><i style="width:'+(d.left/12*100)+'%"></i></div>'+
+    '<div><b>'+r.from+'</b></div><div class="muted">nach '+r.to+'</div><div class="row" style="margin-top:8px"><span class="muted">'+r.km.toFixed(1).replace('.',',')+' km</span><span class="price">'+eur(r.fare)+'</span></div>'+(r.other?'<div class="small muted">Fahrt für andere Person: '+esc(r.other.split(' ')[0])+'</div>':'')+
+    '<div class="small muted">Du gibst nur dein Interesse ab. Der Fahrgast wählt.</div></div><button class="btn" data-act="dWould">Würde fahren</button><button class="btn sec" data-act="dSkip">Überspringen</button>'}
+  if(d.screen==='waiting')h+='<div class="card"><b>Interesse gesendet</b><div class="small muted">Der Fahrgast wählt gerade unter den Interessenten …</div></div>';
+  if(d.screen==='chosen'){var r=d.req;h+='<div class="card" style="border:2px solid var(--accent)"><div class="row"><b>Du wurdest gewählt</b><span class="pill acc">'+eur(r.fare)+'</span></div><div class="muted">'+r.from+' nach '+r.to+'</div>'+(r.other?'<div class="small">Mitfahrende Person: <b>'+esc(r.other)+'</b></div>':'')+'</div><button class="btn" data-act="dStart">Fahrgast eingestiegen</button>'+chatBtn('d')}
+  if(d.screen==='ride'){var r=d.req;h+='<div class="card"><b>Fahrt läuft</b><div class="muted">nach '+r.to+'</div><div class="small muted" style="margin-top:6px">Navigation übergeben an:</div><div class="chips" style="margin-top:6px"><button class="chip" data-act="toast" data-v="Demo: öffnet Google Maps.">Google Maps</button><button class="chip" data-act="toast" data-v="Demo: öffnet Apple Maps.">Apple Maps</button><button class="chip" data-act="toast" data-v="Demo: öffnet Waze.">Waze</button></div></div><button class="btn" data-act="dEnd">Fahrt beenden</button>'+chatBtn('d')}
+  if(d.screen==='done'){var r=d.req,c=r.fare*COMMISSION;h+='<div class="card"><b>Fahrt abgeschlossen</b><div class="row"><span>Fahrpreis</span><span class="price">'+eur(r.fare)+'</span></div><div class="row muted"><span>Provision</span><span>−'+eur(c)+'</span></div><div class="row"><b>Dein Anteil</b><b class="price">'+eur(r.fare-c)+'</b></div></div><button class="btn" data-act="dNext">Weiter</button>'}
+  return '<div class="phone"><div class="phead"><button class="prof" data-act="toast" data-v="Profil: Murat K., Taxi Beispiel Essen, 4,9 Sterne" aria-label="Profil"><span class="avatar sm">MK</span><span><b>Murat K.</b><small>Fahrer · Taxi</small></span></button><span class="pill">Fahrer-App</span></div><div class="pbody">'+h+'</div></div>'}
+function maybeRequest(){var d=S.d;clearT(TD);if(!d.online||d.screen!=='idle')return;
+  later(function(){if(!S.d.online||S.d.screen!=='idle')return;S.d.req=REQS[S.d.ri%REQS.length];S.d.ri++;S.d.screen='request';S.d.left=12;render();
+    every(function(){if(S.d.screen!=='request'){return}S.d.left--;if(S.d.left<=0){clearT(TD);S.d.screen='idle';maybeRequest()}render()},1000,TD)},3000,TD)}
+
+/* ---------- Partner-Dashboard ---------- */
+var P_DRIVERS=[['Murat K.','Taxi','Mercedes E-Klasse','online',4.9],['Ahmet Y.','Taxi','Toyota Prius','online',4.7],['Dirk B.','Taxi','Skoda Octavia','Pause',4.8],['Sabine L.','Mietwagen','Skoda Superb','online',4.8],['Jana W.','Mietwagen','Tesla Model 3','online',5.0],['Emre T.','Mietwagen','VW Passat','offline',4.6]];
+var P_VEH=[['E-NX 1204','Taxi','Mercedes E-Klasse','Murat K.','TÜV 03/2027'],['E-NX 3381','Taxi','Toyota Prius','Ahmet Y.','TÜV 09/2027'],['E-NX 5520','Taxi','Skoda Octavia','Dirk B.','TÜV 01/2027'],['E-TM 4410','Mietwagen','Skoda Superb','Sabine L.','TÜV 06/2027'],['E-TM 7712','Mietwagen','Tesla Model 3','Jana W.','TÜV 11/2026'],['E-TM 2290','Mietwagen','VW Passat','Emre T.','TÜV 04/2027']];
+var P_COMP=[['07:52','07:52','07:58','Rückfahrt zum Betriebssitz','ok'],['08:20','08:20','08:25','Anschlussauftrag vor Fahrtende','ok'],['09:05','09:05','09:10','Ohne Rückfahrt','warn'],['10:40','10:40','10:44','Rückfahrt zum Betriebssitz','ok'],['11:15','11:15','11:20','Anschlussauftrag vor Fahrtende','ok'],['12:02','12:02','12:07','Ohne Rückfahrt','warn'],['13:30','13:30','13:36','Rückfahrt zum Betriebssitz','ok'],['14:10','14:10','14:15','Anschlussauftrag vor Fahrtende','ok']];
+var WEEK=[['Mo',820],['Di',940],['Mi',1010],['Do',1130],['Fr',1480],['Sa',1760],['So',1210]];
+function partTable(head,rows){return '<div class="tw"><table><thead><tr>'+head.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>'}
+function stat(s){var c=s==='online'?'good':s==='Pause'?'warn':'';return '<span class="pill '+c+'">'+s+'</span>'}
+function partView(){var t=S.part.tab;
+  function tb(k,l){return '<button class="tab" data-act="set" data-k="part.tab" data-v="'+k+'" aria-pressed="'+(t===k)+'">'+l+'</button>'}
+  var h='<div class="dash"><div class="row" style="margin-bottom:12px;flex-wrap:wrap"><div><h2 style="font-size:24px">Beispiel-Mobil Ruhr GmbH</h2><div class="muted small">Partner-Dashboard · Taxi und Mietwagen · Beispieldaten</div></div><span class="pill">'+new Date().toLocaleDateString('de-DE')+'</span></div>';
+  h+='<div class="dtabs">'+tb('over','Übersicht')+tb('drivers','Fahrer')+tb('veh','Fahrzeuge')+tb('book','Vorbestellungen')+tb('comp','Compliance')+'</div>';
+  if(t==='over'){
+    var rides=42+S.earn.rides+S.d.today.rides,gross=1184.5+S.earn.gross+S.d.today.gross,comm=gross*COMMISSION,red=S.earn.redeemed,
+        bears=S.part.bears,platform=comm-(bears==='platform'?red:0),net=gross-comm-(bears==='driver'?red:0);
+    h+='<div class="kpis"><div class="kpi"><span class="muted small">Fahrten heute</span><span class="big">'+rides+'</span></div><div class="kpi"><span class="muted small">Umsatz</span><span class="big">'+eur(gross)+'</span></div><div class="kpi"><span class="muted small">Plattform-Provision ('+Math.round(COMMISSION*100)+' %)</span><span class="big">'+eur(platform)+'</span></div><div class="kpi"><span class="muted small">Treue-Rabatte eingelöst</span><span class="big">'+eur(red)+'</span></div><div class="kpi"><span class="muted small">Auszahlung an Fahrer</span><span class="big">'+eur(net)+'</span></div></div>';
+    h+='<div class="grid2"><div class="card"><b>Umsatz der Woche</b><div class="chart">'+WEEK.map(function(w,i){var v=w[1]+(i===0?gross-1184.5:0);return '<div'+(i===0?' class="today"':'')+'><span>'+Math.round(v)+'</span><i style="height:'+Math.round(v/1900*120)+'px"></i><span>'+w[0]+(i===0?' (heute)':'')+'</span></div>'}).join('')+'</div></div>'+
+    '<div class="card"><b>Wer trägt den Treue-Rabatt?</b><p class="small muted">Jede Fahrt bringt dem Fahrgast 5 % aufs Sparkonto. Wer die Kosten trägt, ist noch nicht entschieden. Probiere beide Varianten aus.</p><div class="seg"><button data-act="set" data-k="part.bears" data-v="platform" aria-pressed="'+(bears==='platform')+'">Von der Provision</button><button data-act="set" data-k="part.bears" data-v="driver" aria-pressed="'+(bears==='driver')+'">Vom Fahreranteil</button></div><span class="lbl">Höchster Rabatt pro Fahrt</span><div class="seg"><button data-act="cap" data-v="25" aria-pressed="'+(S.cap===0.25)+'">25 % vom Preis</button><button data-act="cap" data-v="50" aria-pressed="'+(S.cap===0.5)+'">50 % vom Preis</button></div><p class="small" style="margin-bottom:0">Eingelöst bisher: <b>'+eur(red)+'</b>. Fahre in der Fahrgast-App zwei Fahrten und löse das Guthaben ein, dann ändern sich die Zahlen.</p></div></div>'}
+  if(t==='drivers')h+='<div class="card">'+partTable(['Fahrer','Typ','Fahrzeug','Status','Bewertung'],P_DRIVERS.map(function(r){return [r[0],r[1],r[2],stat(r[3]),r[4].toFixed(1).replace('.',',')+' ★']}))+'</div>';
+  if(t==='veh')h+='<div class="card">'+partTable(['Kennzeichen','Typ','Fahrzeug','Fahrer','Prüfung'],P_VEH.map(function(r){return [r[0],'<span class="pill '+(r[1]==='Taxi'?'':'acc')+'">'+r[1]+'</span>',r[2],r[3],r[4]]}))+'</div>';
+  if(t==='book'){var base=[['Heute 14:30','Essen Hbf','Flughafen Düsseldorf','Taxi','Murat K.','fest'],['Morgen 06:15','Bochum, Uni','Dortmund Hbf','Mietwagen','Sabine L.','fest']];
+    var rows=base.map(function(r){return r.slice(0,5).concat(['<span class="pill good">fest</span>'])}).concat(S.bookings.map(function(b){return [b.when,b.from,b.to,b.t==='taxi'?'Taxi':'Mietwagen',b.driver,'<span class="pill '+(b.cancelled?'bad':'good')+'">'+(b.cancelled?'storniert':'fest')+'</span>']}));
+    h+='<div class="card"><b>Vorbestellungen</b><p class="small muted">Bestellungen aus der Fahrgast-App erscheinen hier sofort. Bei Mietwagen geht der Auftrag zuerst an das Unternehmen und wird dann dem Fahrer zugeteilt.</p>'+partTable(['Wann','Abholung','Ziel','Typ','Fahrer','Status'],rows)+'</div>'}
+  if(t==='comp'){var w=P_COMP.filter(function(r){return r[4]==='warn'}).length,q=Math.round(w/P_COMP.length*100);
+    h+='<div class="alert'+(q>20?'':' ok')+'"><b>'+(q>20?'Auffällig viele Mietwagenfahrten ohne Rückfahrt: '+q+' %':'Mietwagen ohne Rückfahrt: '+q+' %')+'</b><div class="small muted">Warnschwelle in der Demo: 20 %. Prüfe, ob zu diesen Fahrten ein Anschlussauftrag vorlag. Ob ein Einsatzmuster zulässig ist, klärt ein Anwalt für Personenbeförderungsrecht.</div></div>'+
+    '<div class="card"><div class="row" style="flex-wrap:wrap"><b>Compliance-Log Mietwagen (Beispiel)</b><button class="chip" data-act="copyLog">CSV kopieren</button></div>'+partTable(['Auftragseingang','Zeitstempel Betriebssitz','Zuteilung an Fahrer','Rückfahrt','Status'],P_COMP.map(function(r){return [r[0],r[1],r[2],r[3],'<span class="pill '+(r[4]==='ok'?'good':'warn')+'">'+(r[4]==='ok'?'in Ordnung':'prüfen')+'</span>']}))+'</div>'}
+  return h+'</div>'}
+
+/* ---------- Rendern und Ereignisse ---------- */
+function render(){var app=document.getElementById('app'),f=document.activeElement&&document.activeElement.id;
+  app.innerHTML=passView();
+  var cl=document.getElementById('clist');if(cl)cl.scrollTop=cl.scrollHeight;
+  if(f&&(f==='oname'||f==='ophone'||f==='cmsg')){var e=document.getElementById(f);if(e){e.focus();var n=e.value.length;try{e.setSelectionRange(n,n)}catch(x){}}}}
+document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(!el)return;var a=el.dataset.act,v=el.dataset.v,p=S.p;
+  if(a==='view'){S.view=v;if(v==='drv')maybeRequest();else{clearT(TD);if(S.d.screen==='request'||S.d.screen==='waiting')S.d.screen='idle'}render();return}
+  if(a==='theme'){var r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';return}
+  if(a==='set'){setPath(el.dataset.k,parseV(v));render();return}
+  if(a==='ptab'){p.tab=v;p.screen='home';render();return}
+  if(a==='openProfile'){if(p.screen==='home')p.screen='profile';else toast('Profil: '+ME.n);render();return}
+  if(a==='cap'){S.cap=Number(v)/100;render();return}
+  if(a==='toVehicle'){if(p.who==='other'&&!p.oname.trim()){toast('Bitte den Namen der mitfahrenden Person eintragen.');return}p.screen='vehicle';render();return}
+  if(a==='back'){p.screen='home';render();return}
+  if(a==='startSearch'){startSearch();return}
+  if(a==='cancelSearch'){clearT();p.screen='home';render();return}
+  if(a==='pick'){pick(v);return}
+  if(a==='fastest'){pickFastest();return}
+  if(a==='finishRate'){finishRate();return}
+  if(a==='confirmBooking'){confirmBooking();return}
+  if(a==='goTrips'){p.screen='home';p.tab='trips';render();return}
+  if(a==='cancelBooking'){var b=S.bookings[Number(v)];b.cancelled=true;toast('Vorbestellung storniert');render();return}
+  if(a==='toast'){toast(v);return}
+  if(a==='copyLog'){var csv='Auftragseingang;Zeitstempel Betriebssitz;Zuteilung;Rueckfahrt;Status\n'+P_COMP.map(function(r){return r.join(';')}).join('\n');
+    try{navigator.clipboard.writeText(csv).then(function(){toast('CSV kopiert')},function(){toast('Kopieren nicht möglich')})}catch(x){toast('Kopieren nicht möglich')}return}
+  if(a==='openChat'){var c=S[chatKey(v)];if(c){c.show=true;c.unread=0;render();var ci=document.getElementById('cmsg');if(ci)ci.focus()}return}
+  if(a==='chatBack'){var c2=S[chatKey(v)];if(c2)c2.show=false;render();return}
+  if(a==='chatSend'){sendChat(v);return}
+  if(a==='chatQuick'){chatSay(v,QR[v][Number(el.dataset.i)]);return}
+  var d=S.d;
+  if(a==='dWould'){clearT(TD);d.screen='waiting';render();later(function(){S.d.screen='chosen';chatNew('d','Du wurdest gewählt. Du kannst jetzt mit dem Fahrgast schreiben. Telefonnummern bleiben verborgen.');var cid=S.cd.id;setTimeout(function(){if(S.cd&&S.cd.id===cid)chatPush('d','p','Ich warte am Eingang.')},2500);render()},4000,TD);return}
+  if(a==='dSkip'){clearT(TD);d.screen='idle';render();maybeRequest();return}
+  if(a==='dStart'){d.screen='ride';render();return}
+  if(a==='dEnd'){chatClose('d');d.screen='done';d.today.rides++;d.today.gross+=d.req.fare;render();return}
+  if(a==='dNext'){d.screen='idle';render();maybeRequest();return}
+});
+document.addEventListener('change',function(e){var t=e.target;
+  if(t.dataset.sel){setPath(t.dataset.sel,parseV(t.value));render();return}
+  if(t.dataset.bindChk){setPath(t.dataset.bindChk,t.checked);if(t.dataset.bindChk==='d.online'){if(t.checked)maybeRequest();else{clearT(TD);S.d.screen='idle'}}render()}});
+document.addEventListener('keydown',function(e){if(e.target.id==='cmsg'&&e.key==='Enter'){e.preventDefault();sendChat(S.view==='pass'?'p':'d')}});
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset.bind)setPath(t.dataset.bind,t.value)});
+render();
+</script>
+</body>
+</html>
