@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>TM Ruhr – Kunden-App</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: white;
+    }
+    header {
+      padding: 22px;
+      background: #172337;
+      border-bottom: 1px solid #304158;
+    }
+    .logo { font-size: 25px; font-weight: bold; }
+    .logo span { color: #48d6a0; }
+    main { max-width: 600px; margin: auto; padding: 22px; }
+    h1 { font-size: 27px; margin-bottom: 8px; }
+    .muted { color: #a9b6c9; line-height: 1.5; }
+    .card {
+      background: #1b2a40;
+      border: 1px solid #304158;
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    label { display: block; margin: 16px 0 7px; }
+    input, select {
+      width: 100%;
+      padding: 14px;
+      border-radius: 9px;
+      border: 1px solid #40536d;
+      background: #101827;
+      color: white;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 20px;
+      border: 0;
+      border-radius: 10px;
+      background: #48d6a0;
+      color: #10251f;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .notice { font-size: 12px; color: #a9b6c9; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">TM <span>RUHR</span></div>
+    <div class="muted">Deine Mobilität. Deine Entscheidung.</div>
+  </header>
+
+  <main>
+    <h1>Wohin möchtest du fahren?</h1>
+    <p class="muted">Buche deine Fahrt bequem und einfach mit TM Ruhr.</p>
+
+    <section class="card">
+      <h2>Deine Fahrt</h2>
+
+      <label for="pickup">Abholort</label>
+      <input id="pickup" placeholder="Wo sollen wir dich abholen?">
+
+      <label for="destination">Fahrtziel</label>
+      <input id="destination" placeholder="Wohin möchtest du fahren?">
+
+      <label for="vehicle">Fahrzeugart</label>
+      <select id="vehicle">
+        <option value="Taxi">Taxi</option>
+        <option value="Mietwagen mit Fahrer">Mietwagen mit Fahrer</option>
+      </select>
+
+      <label for="time">Fahrtzeit</label>
+      <select id="time">
+        <option value="Sofort">So schnell wie möglich</option>
+        <option value="Vorbestellung">Fahrt vorbestellen</option>
+      </select>
+
+      <button onclick="bookRide()">Fahrt anfragen</button>
+
+      <p id="result" class="muted"></p>
+      <p class="notice">
+        Demo-Version: Die Anfrage wird noch nicht an echte Fahrer übermittelt.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    function bookRide() {
+      const pickup = document.getElementById("pickup").value.trim();
+      const destination = document.getElementById("destination").value.trim();
+      const vehicle = document.getElementById("vehicle").value;
+      const time = document.getElementById("time").value;
+
+      if (!pickup || !destination) {
+        document.getElementById("result").textContent =
+          "Bitte gib Abholort und Fahrtziel ein.";
+        return;
+      }
+
+      document.getElementById("result").textContent =
+        "Deine Demo-Anfrage: " + pickup + " → " + destination +
+        " | " + vehicle + " | " + time;
+    }
+  </script>
+</body>
+</html>
